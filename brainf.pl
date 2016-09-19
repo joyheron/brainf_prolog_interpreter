@@ -29,7 +29,7 @@ test(dec) :-
 
 :- begin_tests(getchar).
 test(onechar) :-
-    string_to_list("foo", Codes),
+    string_codes("foo", Codes),
     Codes = [H|T],
     interpret(getchar,Codes,T,Out,Out,_BIn,_-H-_).
 :- end_tests(getchar).
@@ -137,9 +137,39 @@ interpret([Inst|T],StdIn,ResStdIn,StdOut,ResStdOut,BandIn,ResBand) :-
 
 :- use_module(library(lists)).
 brainf(StdIn,Res,Program) :-
-    string_to_list(StdIn,StdInCodes),
-    string_to_list(Program,ProgramCodes),
+    string_codes(StdIn,StdInCodes),
+    string_codes(Program,ProgramCodes),
     inst_list(Instructions,ProgramCodes,[]),
     interpret(Instructions,StdInCodes,_StdIn,[],ReversedStdOut,[]-0-[],_BandOut),
     reverse(ReversedStdOut, StdOut),
-    string_to_list(Res, StdOut).
+    string_codes(Res, StdOut).
+
+
+%% interpret2 uses actual StdIn and StdOut
+interpret2(right,StdIn,StdIn,L-E-[],[E|L]-0-[]) :- !.
+interpret2(right,StdIn,StdIn,L-E-[H|T],[E|L]-H-T).
+interpret2(left,StdIn,StdIn,[]-E-L,[]-0-[E|L]) :- !.
+interpret2(left,StdIn,StdIn,[H|T]-E-L,T-H-[E|L]).
+interpret2(inc,StdIn,StdIn,L-E-R,L-E2-R) :- E2 is E + 1.
+interpret2(dec,StdIn,StdIn,L-E-R,L-E2-R) :- E2 is E - 1.
+interpret2(getchar,[],StdIn,L-_-R,L-C-R) :- !,read_line_to_codes(user_input, [C|StdIn]).
+interpret2(getchar,[C|Rest],Rest,L-_-R,L-C-R).
+interpret2(putchar,StdIn,StdIn,L-C-R,L-C-R) :-
+    string_codes(String, [C]),
+    write(String).
+
+interpret2(loop(_Instructions),StdIn,StdIn,L-0-R,L-0-R) :- !.
+interpret2(loop(Instructions),StdIn,StdInRes,L-E-R,BOut) :-
+    E \== 0,
+    interpret2(Instructions,StdIn,StdIn1,L-E-R,BNew),
+    interpret2(loop(Instructions),StdIn1,StdInRes,BNew,BOut).
+
+interpret2([],StdIn,StdIn,Band,Band) :- !.
+interpret2([Inst|T],StdIn,ResStdIn,BandIn,ResBand) :-
+    interpret2(Inst,StdIn,StdIn1,BandIn,Band2),
+    interpret2(T,StdIn1,ResStdIn,Band2,ResBand).
+
+exec(Program) :-
+    string_codes(Program, ProgramCodes),
+    inst_list(Instructions, ProgramCodes, []),
+    interpret2(Instructions, [], _StdIn, []-0-[], _BandOut).
