@@ -43,67 +43,85 @@ test(onechar_full) :-
 
 :- begin_tests(plus).
 test(empty_cell) :-
-    brainf([], Res, "+."), !, Res = "\001\".
+   brainf([], Res, "+."), !, Res = "\001\".
 test(double_add) :-
-    brainf([], Res, "++."), !, Res = "\002\".
+   brainf([], Res, "++."), !, Res = "\002\".
 :- end_tests(plus).
 
 :- begin_tests(minus).
 test(empty_minus, error(type_error(character_code, -1), _Context)) :-
-    brainf([], _Res, "-."), !. % There is no ASCII code for -1
+   brainf([], _Res, "-."), !. % There is no ASCII code for -1
 :- end_tests(minus).
 
 :- begin_tests(mixed).
 test(plus_minus) :-
-    brainf([], Res, "+-."), !, Res = "\000\".
+   brainf([], Res, "+-."), !, Res = "\000\".
 test(plus_double_minus, error(type_error(character_code, -1), _Context)) :-
-    brainf([], _Res, "+--."), !. % There is no ASCII code for -1
+   brainf([], _Res, "+--."), !. % There is no ASCII code for -1
 :- end_tests(mixed). 
 
 :- begin_tests(comma).
 test(take_char) :-
-    brainf("foo", Res, ",."), !, Res = "f".
+   brainf("foo", Res, ",."), !, Res = "f".
 test(take_all_chars) :-
-    brainf("foo", Res, ",.,.,."), !, Res = "foo".
+   brainf("foo", Res, ",.,.,."), !, Res = "foo".
 :- end_tests(comma).
 
 :- begin_tests(movement).
 test(no_move) :-
-    brainf([], Res, "+++++."), !, Res = "\005\".
+   brainf([], Res, "+++++."), !, Res = "\005\".
 test(move_right) :-
-    brainf([], Res, "+++++>+."), !, Res = "\001\".
+   brainf([], Res, "+++++>+."), !, Res = "\001\".
 test(move_double_right) :-
-    brainf([], Res, "+++++>>+."), !, Res = "\001\".
+   brainf([], Res, "+++++>>+."), !, Res = "\001\".
 test(first_move_right) :-
-    brainf([], Res, ">+."), !, Res = "\001\".
+   brainf([], Res, ">+."), !, Res = "\001\".
 test(move_left) :-
-    brainf([], Res, "+++++<+."), !, Res = "\001\".
+   brainf([], Res, "+++++<+."), !, Res = "\001\".
 test(move_double_left) :-
-    brainf([], Res, "+++++<<+."), !, Res = "\001\".
+   brainf([], Res, "+++++<<+."), !, Res = "\001\".
 test(first_move_left) :-
-    brainf([], Res, "<+."), !, Res = "\001\".
+   brainf([], Res, "<+."), !, Res = "\001\".
 test(left_right_and_all_over_again) :-
-    brainf([], Res, "++++.>++.<++.<+.>+++.>+++.>+++.<++."), !, Res = "\004\\002\\006\\001\\t\005\\003\\007\".
+   brainf([], Res, "++++.>++.<++.<+.>+++.>+++.>+++.<++."), !, Res = "\004\\002\\006\\001\\t\005\\003\\007\".
 :- end_tests(movement).
 
 :- begin_tests(loop).
 test(loop) :-
-    brainf([], Res, "+++[.-]+."), !, Res = "\003\\002\\001\\001\".
+   brainf([], Res, "+++[.-]+."), !, Res = "\003\\002\\001\\001\".
 :- end_tests(loop).
 
 :- begin_tests(helloworld).
 test(helloworld) :-
-    brainf("",R,"++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."),
-    R == "Hello World!\n".
+   brainf("",R,"++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."),
+   R == "Hello World!\n".
 test(helloworld2) :-
-    brainf("",R,"++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."),
-    R == "Hello World!\n".
+   brainf("",R,"++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."),
+   R == "Hello World!\n".
 test(complicated_hw) :-
-    brainf("",R,">++++++++[<+++++++++>-]<.>>+>+>++>[-]+<[>[->+<<++++>]<<]>.+++++++..+++.>>+++++++.<<<[[-]<[-]>]<+++++++++++++++.>>.+++.------.--------.>>+.>++++."),
-    R == "Hello World!\n".
+   brainf("",R,">++++++++[<+++++++++>-]<.>>+>+>++>[-]+<[>[->+<<++++>]<<]>.+++++++..+++.>>+++++++.<<<[[-]<[-]>]<+++++++++++++++.>>.+++.------.--------.>>+.>++++."),
+   R == "Hello World!\n".
 :- end_tests(helloworld).
 
 test6(R) :- inst_list(R,"++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",[]).
+
+ignore_unknown(L, Known) :-
+   string_codes("><+-.,[]", Allowed),
+   ignore_unknown(Allowed, L, Known).
+
+ignore_unknown(_Allowed, [], []).
+ignore_unknown(Allowed, [H|T], [H|Rest]) :-
+   member(H, Allowed), !,
+   ignore_unknown(Allowed, T, Rest).
+ignore_unknown(Allowed, [H|T], Rest) :-
+   \+ member(H, Allowed), !,
+   ignore_unknown(Allowed, T, Rest).
+
+get_instructions(Program, Instructions) :-
+   string_codes(Program, ProgramCodes),
+   ignore_unknown(ProgramCodes, KnownCodes),
+   inst_list(Instructions, KnownCodes, []).
+
 
 parse(right) --> ">".
 parse(left) --> "<".
@@ -138,7 +156,7 @@ interpret([Inst|T],StdIn,ResStdIn,StdOut,ResStdOut,BandIn,ResBand) :-
 :- use_module(library(lists)).
 brainf(StdIn,Res,Program) :-
    string_codes(StdIn,StdInCodes),
-   get_instructions(Program, Instructions)
+   get_instructions(Program, Instructions),
    interpret(Instructions,StdInCodes,_StdIn,[],ReversedStdOut,[]-0-[],_BandOut),
    reverse(ReversedStdOut, StdOut),
    string_codes(Res, StdOut).
